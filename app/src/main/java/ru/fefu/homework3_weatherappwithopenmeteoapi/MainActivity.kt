@@ -6,42 +6,49 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import ru.fefu.homework3_weatherappwithopenmeteoapi.ui.theme.HomeWork3WeatherAppWithOpenMeteoApiTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContent {
-            HomeWork3WeatherAppWithOpenMeteoApiTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+            MaterialTheme{
+                AppNavigation()
             }
         }
     }
 }
 
 @Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
+fun AppNavigation() {
+    val navController = rememberNavController()
+    val viewModel: WeatherViewModel = viewModel()
 
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    HomeWork3WeatherAppWithOpenMeteoApiTheme {
-        Greeting("Android")
+    NavHost(navController = navController, startDestination = "search") {
+        composable("search") {
+            SearchScreen(
+                viewModel = viewModel,
+                onCityClick = { city ->
+                    viewModel.loadWeather(city)
+                    navController.navigate("detail")
+                }
+            )
+        }
+        composable("detail") {
+            DetailScreen(
+                viewModel = viewModel,
+                onBack = { navController.popBackStack() }
+            )
+        }
     }
 }
