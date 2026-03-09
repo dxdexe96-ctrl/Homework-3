@@ -131,7 +131,8 @@ fun DetailScreen(
                 .fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            when (val state = viewModel.weatherState) {
+            when (val state = viewModel.weatherState)
+            {
                 null, WeatherUiState.Loading -> CircularProgressIndicator()
                 is WeatherUiState.Error -> {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
