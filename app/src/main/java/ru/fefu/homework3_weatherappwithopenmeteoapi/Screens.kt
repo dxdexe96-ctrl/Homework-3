@@ -18,8 +18,12 @@ import androidx.compose.ui.unit.dp
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchScreen(
-    viewModel: WeatherViewModel,
-    onCityClick: (City) -> Unit
+    searchQuery: String,
+    onQueryChange: (String) -> Unit,
+    onSearch: () -> Unit,
+    searchState: SearchUiState,
+    onCityClick: (City) -> Unit,
+    onFavouriteClick: (City) -> Unit
 ) {
     Scaffold(
         topBar = { TopAppBar(title = { Text("Поиск погоды") }) }
@@ -31,20 +35,20 @@ fun SearchScreen(
                 .fillMaxSize()
         ) {
             OutlinedTextField(
-                value = viewModel.searchQuery,
-                onValueChange = { viewModel.onQueryChange(it) },
+                value = searchQuery,
+                onValueChange = onQueryChange,
                 label = { Text("Название города") },
-                placeholder = { Text("Например: Moscov") },
+                placeholder = { Text("Например: Moscow") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
             Spacer(modifier = Modifier.height(8.dp))
-            Button(onClick = { viewModel.searchCities() }, modifier = Modifier.fillMaxWidth()) {
+            Button(onClick = onSearch, modifier = Modifier.fillMaxWidth()) {
                 Text("Найти")
             }
             Spacer(modifier = Modifier.height(16.dp))
 
-            when (val state = viewModel.searchState) {
+            when (searchState) {
                 is SearchUiState.Idle -> Text("Введите название города и нажмите «Найти»")
                 is SearchUiState.Loading -> Box(
                     modifier = Modifier.fillMaxWidth(),
@@ -52,18 +56,18 @@ fun SearchScreen(
                 ) { CircularProgressIndicator() }
                 is SearchUiState.Empty -> Text("Ничего не найдено. Попробуйте другое название.")
                 is SearchUiState.Error -> {
-                    Text("Ошибка: ${state.message}")
+                    Text("Ошибка: ${searchState.message}")
                     Spacer(modifier = Modifier.height(8.dp))
-                    Button(onClick = { viewModel.searchCities() }) { Text("Повторить") }
+                    Button(onClick = onSearch) { Text("Повторить") }
                 }
                 is SearchUiState.Success -> {
                     LazyColumn {
-                        items(state.cities) { city ->
+                        items(searchState.items) { item ->
                             CityListItem(
-                                city = city,
-                                isFavourite = viewModel.isFavourite(city),
-                                onClick = { onCityClick(city) },
-                                onFavouriteClick = { viewModel.toggleFavourite(city) }
+                                city = item.city,
+                                isFavourite = item.isFavourite,
+                                onClick = { onCityClick(item.city) },
+                                onFavouriteClick = { onFavouriteClick(item.city) }
                             )
                             HorizontalDivider()
                         }
@@ -110,8 +114,9 @@ fun CityListItem(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetailScreen(
-    viewModel: WeatherViewModel,
-    onBack: () -> Unit
+    detailState: DetailUiState,
+    onBack: () -> Unit,
+    onFavouriteClick: (City) -> Unit  // колбэк для избранного (без параметра, т.к. город уже известен)
 ) {
     Scaffold(
         topBar = {
@@ -131,22 +136,21 @@ fun DetailScreen(
                 .fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            when (val state = viewModel.weatherState)
-            {
-                null, WeatherUiState.Loading -> CircularProgressIndicator()
-                is WeatherUiState.Error -> {
+            when (detailState) {
+                is DetailUiState.Loading -> CircularProgressIndicator()
+                is DetailUiState.Error -> {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("Ошибка: ${state.message}")
+                        Text("Ошибка: ${detailState.message}")
                         Spacer(modifier = Modifier.height(8.dp))
                         Button(onClick = onBack) { Text("Назад") }
                     }
                 }
-                is WeatherUiState.Success -> {
+                is DetailUiState.Success -> {
                     WeatherDetail(
-                        city = state.city,
-                        weather = state.weather,
-                        isFavourite = viewModel.isFavourite(state.city),
-                        onFavouriteClick = { viewModel.toggleFavourite(state.city) }
+                        city = detailState.city,
+                        weather = detailState.weather,
+                        isFavourite = detailState.isFavourite,
+                        onFavouriteClick = onFavouriteClick
                     )
                 }
             }
@@ -159,7 +163,7 @@ fun WeatherDetail(
     city: City,
     weather: CurrentWeather,
     isFavourite: Boolean,
-    onFavouriteClick: () -> Unit
+    onFavouriteClick: (City) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -188,7 +192,7 @@ fun WeatherDetail(
             }
         }
         Spacer(modifier = Modifier.height(24.dp))
-        Button(onClick = onFavouriteClick) {
+        Button(onClick = { onFavouriteClick(city) }) {
             Icon(
                 imageVector = if (isFavourite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                 contentDescription = null,

@@ -3,26 +3,18 @@ package ru.fefu.homework3_weatherappwithopenmeteoapi
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import ru.fefu.homework3_weatherappwithopenmeteoapi.ui.theme.HomeWork3WeatherAppWithOpenMeteoApiTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MaterialTheme{
+            MaterialTheme {
                 AppNavigation()
             }
         }
@@ -34,20 +26,27 @@ fun AppNavigation() {
     val navController = rememberNavController()
     val viewModel: WeatherViewModel = viewModel()
 
-    NavHost(navController = navController, startDestination = "search") {
-        composable("search") {
+    NavHost(navController = navController, startDestination = "search")
+    {
+        composable("search")
+        {
             SearchScreen(
-                viewModel = viewModel,
+                searchQuery = viewModel.searchQuery,
+                onQueryChange = viewModel::onQueryChange,
+                onSearch = viewModel::searchCities,
+                searchState = viewModel.searchState,
                 onCityClick = { city ->
                     viewModel.loadWeather(city)
                     navController.navigate("detail")
-                }
+                },
+                onFavouriteClick = viewModel::toggleFavourite
             )
         }
         composable("detail") {
             DetailScreen(
-                viewModel = viewModel,
-                onBack = { navController.popBackStack() }
+                detailState = viewModel.detailState,
+                onBack = { navController.popBackStack() },
+                onFavouriteClick = { city -> viewModel.toggleFavourite(city) }
             )
         }
     }
