@@ -15,14 +15,6 @@ class WeatherRepository {
     suspend fun getWeather(lat: Double, lon: Double): WeatherResponse {
         return RetrofitClient.weatherApi.getWeather(lat, lon)
     }
-sealed class WeatherUiState {
-    object Loading : WeatherUiState()
-    data class Success(
-        val weather: CurrentWeather,
-        val city: City
-    ) : WeatherUiState()
-    data class Error(val message: String) : WeatherUiState()
-    }
 }
 
 sealed class DetailUiState {
@@ -41,17 +33,17 @@ sealed class SearchUiState {
     object Idle : SearchUiState()
     object Loading : SearchUiState()
     object Empty : SearchUiState()
-    data class Success(val items: List<CityItem>) : SearchUiState()   // ← изменено
+    data class Success(val items: List<CityItem>) : SearchUiState()
     data class Error(val message: String) : SearchUiState()
 }
 
 class WeatherViewModel : ViewModel() {
+    private val citiesCache = mutableMapOf<Int, City>() // добавил сохранялку для любимых городов
     private val repository = WeatherRepository()
-
     var searchState: SearchUiState by mutableStateOf(SearchUiState.Idle)
         private set
 
-    var detailState: DetailUiState by mutableStateOf(DetailUiState.Loading) // новое поле
+    var detailState: DetailUiState by mutableStateOf(DetailUiState.Loading)
         private set
 
     var searchQuery: String by mutableStateOf("")
@@ -70,6 +62,9 @@ class WeatherViewModel : ViewModel() {
             searchState = SearchUiState.Loading
             try {
                 val cities = repository.searchCities(searchQuery)
+                cities.forEach {
+                    citiesCache[it.id] = it
+                }
                 searchState = if (cities.isEmpty()) {
                     SearchUiState.Empty
                 } else {
@@ -85,9 +80,14 @@ class WeatherViewModel : ViewModel() {
         }
     }
 
-    fun loadWeather(city: City) {
+    fun loadWeather(cityId: Int) {
         viewModelScope.launch {
             detailState = DetailUiState.Loading
+            val city = citiesCache[cityId]
+            if (city == null) {
+                detailState = DetailUiState.Error("Город не найден")
+                return@launch
+            }
             try {
                 val response = repository.getWeather(city.latitude, city.longitude)
                 val isFav = favourites.any { it.id == city.id }
@@ -99,7 +99,10 @@ class WeatherViewModel : ViewModel() {
     }
 
     fun toggleFavourite(city: City) {
-        favourites = if (favourites.any { it.id == city.id }) {
+        citiesCache[city.id] = city
+
+        favourites = if (favourites.any { it.id == city.id })
+        {
             favourites.filter { it.id != city.id }
         } else {
             favourites + city
@@ -109,7 +112,6 @@ class WeatherViewModel : ViewModel() {
             val success = detailState as DetailUiState.Success
             detailState = success.copy(isFavourite = favourites.any { it.id == city.id })
         }
-        // Также обновляем searchState, если он содержит этот город
         updateSearchStateFavourite(city)
     }
 
@@ -123,3 +125,4 @@ class WeatherViewModel : ViewModel() {
         searchState = success.copy(items = updatedItems)
     }
 }
+

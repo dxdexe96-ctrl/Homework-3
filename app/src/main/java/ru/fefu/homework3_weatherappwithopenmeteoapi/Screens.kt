@@ -23,10 +23,23 @@ fun SearchScreen(
     onSearch: () -> Unit,
     searchState: SearchUiState,
     onCityClick: (City) -> Unit,
-    onFavouriteClick: (City) -> Unit
+    onFavouriteClick: (City) -> Unit,
+    onOpenFavourites: () -> Unit
 ) {
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Поиск погоды") }) }
+        topBar = {
+            TopAppBar(
+                title = { Text("Поиск погоды") },
+                actions = {
+                    IconButton(onClick = onOpenFavourites) {
+                        Icon(
+                            imageVector = Icons.Default.Favorite,
+                            contentDescription = "Открыть избранное"
+                        )
+                    }
+                }
+            )
+        }
     ) { padding ->
         Column(
             modifier = Modifier
@@ -110,13 +123,13 @@ fun CityListItem(
     }
 }
 
-//  Экран деталей
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetailScreen(
     detailState: DetailUiState,
     onBack: () -> Unit,
-    onFavouriteClick: (City) -> Unit  // колбэк для избранного (без параметра, т.к. город уже известен)
+    onFavouriteClick: (City) -> Unit
 ) {
     Scaffold(
         topBar = {
@@ -212,5 +225,57 @@ fun WeatherRow(label: String, value: String) {
     ) {
         Text(label, style = MaterialTheme.typography.bodyMedium)
         Text(value, style = MaterialTheme.typography.bodyMedium)
+    }
+}
+
+
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun FavouritesScreen(
+    favourites: List<City>,
+    onBack: () -> Unit,
+    onCityClick: (City) -> Unit,
+    onFavouriteClick: (City) -> Unit
+) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Любимые места") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.Default.ArrowBackIosNew, contentDescription = "Назад")
+                    }
+                }
+            )
+        }
+    ) { padding ->
+        Box(
+            modifier = Modifier
+                .padding(padding)
+                .fillMaxSize()
+        ) {
+            if (favourites.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("Список избранного пока пуст")
+                }
+            } else {
+                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                    items(favourites) { city ->
+                        CityListItem(
+                            city = city,
+                            isFavourite = true,
+                            onClick = { onCityClick(city) },
+                            onFavouriteClick = { onFavouriteClick(city) }
+                        )
+                        HorizontalDivider()
+                    }
+                }
+            }
+        }
     }
 }

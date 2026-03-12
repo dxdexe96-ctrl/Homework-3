@@ -5,7 +5,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Query
 
-// Интерфейсы API
+
 interface GeocodingApi {
     @GET("v1/search")
     suspend fun searchCity(
@@ -24,7 +24,7 @@ interface WeatherApi {
     ): WeatherResponse
 }
 
-// Retrofit клиенты
+
 object RetrofitClient {
     val geocodingApi: GeocodingApi = Retrofit.Builder()
         .baseUrl("https://geocoding-api.open-meteo.com/")
