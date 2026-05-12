@@ -1,4 +1,4 @@
-package ru.fefu.homework3_weatherappwithopenmeteoapi
+package ru.fefu.homework3_weatherappwithopenmeteoapi.ui.screen
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -13,6 +13,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import ru.fefu.homework3_weatherappwithopenmeteoapi.data.remote.City
+import ru.fefu.homework3_weatherappwithopenmeteoapi.data.remote.CurrentWeather
+import ru.fefu.homework3_weatherappwithopenmeteoapi.ui.viewmodel.DetailUiState
+import ru.fefu.homework3_weatherappwithopenmeteoapi.ui.viewmodel.SearchUiState
+import ru.fefu.homework3_weatherappwithopenmeteoapi.data.remote.weatherDescription
 
 
 @OptIn(ExperimentalMaterial3Api::class)

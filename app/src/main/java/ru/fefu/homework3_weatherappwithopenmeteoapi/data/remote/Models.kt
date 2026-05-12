@@ -1,4 +1,4 @@
-package ru.fefu.homework3_weatherappwithopenmeteoapi
+package ru.fefu.homework3_weatherappwithopenmeteoapi.data.remote
 
 data class City(
     val id: Int,

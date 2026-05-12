@@ -1,4 +1,4 @@
-package ru.fefu.homework3_weatherappwithopenmeteoapi
+package ru.fefu.homework3_weatherappwithopenmeteoapi.data.remote
 
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -22,19 +22,4 @@ interface WeatherApi {
         @Query("longitude") longitude: Double,
         @Query("current_weather") currentWeather: Boolean = true
     ): WeatherResponse
-}
-
-
-object RetrofitClient {
-    val geocodingApi: GeocodingApi = Retrofit.Builder()
-        .baseUrl("https://geocoding-api.open-meteo.com/")
-        .addConverterFactory(GsonConverterFactory.create())
-        .build()
-        .create(GeocodingApi::class.java)
-
-    val weatherApi: WeatherApi = Retrofit.Builder()
-        .baseUrl("https://api.open-meteo.com/")
-        .addConverterFactory(GsonConverterFactory.create())
-        .build()
-        .create(WeatherApi::class.java)
 }
