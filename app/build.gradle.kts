@@ -24,6 +24,17 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    packaging {
+        resources {
+            excludes += "/META-INF/LICENSE.md"
+            excludes += "/META-INF/LICENSE-notice.md"
+
+            excludes += "/META-INF/AL2.0"
+            excludes += "/META-INF/LGPL2.1"
+            excludes += "/META-INF/NOTICE.md"
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -46,6 +57,7 @@ android {
 }
 
 dependencies {
+    implementation(libs.androidx.junit.ktx)
     val room_version = "2.8.4"
     implementation("androidx.room:room-runtime:$room_version")
     ksp("androidx.room:room-compiler:$room_version")
@@ -59,6 +71,26 @@ dependencies {
     implementation("com.squareup.retrofit2:retrofit:3.0.0")
     implementation("com.squareup.retrofit2:converter-gson:3.0.0")
     implementation("androidx.compose.material:material-icons-extended:1.7.8")
+
+    testImplementation ("junit:junit:4.13.2")
+    testImplementation ("io.mockk:mockk:1.13.5")
+    testImplementation ("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+    testImplementation ("app.cash.turbine:turbine:1.0.0")
+    testImplementation ("androidx.arch.core:core-testing:2.2.0")
+
+    androidTestImplementation ("androidx.test.ext:junit:1.1.5")
+    androidTestImplementation ("androidx.test:runner:1.5.2")
+    androidTestImplementation ("androidx.test:rules:1.5.0")
+    androidTestImplementation ("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+    androidTestImplementation ("app.cash.turbine:turbine:1.0.0")
+    androidTestImplementation ("androidx.room:room-testing:2.6.1")
+    androidTestImplementation ("io.mockk:mockk-android:1.13.5")
+
+    androidTestImplementation( "androidx.compose.ui:ui-test-junit4:1.5.4")
+    debugImplementation ("androidx.compose.ui:ui-test-manifest:1.5.4")
+
+    androidTestImplementation("com.google.dagger:hilt-android-testing:2.48")
+    kspAndroidTest("com.google.dagger:hilt-android-compiler:2.48")
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

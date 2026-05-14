@@ -9,11 +9,12 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import ru.fefu.homework3_weatherappwithopenmeteoapi.data.local.AppDatabase
-import ru.fefu.homework3_weatherappwithopenmeteoapi.data.local.FavouriteDao
+import ru.fefu.homework3_weatherappwithopenmeteoapi.data.localDb.AppDatabase
+import ru.fefu.homework3_weatherappwithopenmeteoapi.data.localDb.FavouriteDao
 import ru.fefu.homework3_weatherappwithopenmeteoapi.data.remote.GeocodingApi
 import ru.fefu.homework3_weatherappwithopenmeteoapi.data.remote.WeatherApi
-import ru.fefu.homework3_weatherappwithopenmeteoapi.ui.viewmodel.WeatherRepository
+import ru.fefu.homework3_weatherappwithopenmeteoapi.domain.repository.WeatherRepository
+import ru.fefu.homework3_weatherappwithopenmeteoapi.domain.repository.WeatherRepositoryImpl
 import javax.inject.Singleton
 
 @Module
@@ -51,5 +52,5 @@ object AppModule {
         geocodingApi: GeocodingApi,
         weatherApi: WeatherApi,
         favouriteDao: FavouriteDao
-    ): WeatherRepository = WeatherRepository(geocodingApi, weatherApi, favouriteDao)
+    ): WeatherRepository = WeatherRepositoryImpl(geocodingApi, weatherApi, favouriteDao)
 }

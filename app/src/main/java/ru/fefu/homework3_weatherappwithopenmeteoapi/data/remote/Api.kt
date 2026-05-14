@@ -4,6 +4,8 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Query
+import ru.fefu.homework3_weatherappwithopenmeteoapi.data.dto.GeocodingResponse
+import ru.fefu.homework3_weatherappwithopenmeteoapi.data.dto.WeatherResponse
 
 
 interface GeocodingApi {
