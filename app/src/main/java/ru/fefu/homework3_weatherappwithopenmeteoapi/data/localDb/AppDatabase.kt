@@ -1,9 +1,7 @@
-package ru.fefu.homework3_weatherappwithopenmeteoapi.data.local
+package ru.fefu.homework3_weatherappwithopenmeteoapi.data.localDb
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
-import ru.fefu.homework3_weatherappwithopenmeteoapi.data.local.FavouriteDao
-import ru.fefu.homework3_weatherappwithopenmeteoapi.data.local.FavouriteEntity
 
 @Database(
     entities = [FavouriteEntity::class],

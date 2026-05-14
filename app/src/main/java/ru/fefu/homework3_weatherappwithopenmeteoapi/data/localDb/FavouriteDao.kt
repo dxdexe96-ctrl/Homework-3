@@ -1,4 +1,4 @@
-package ru.fefu.homework3_weatherappwithopenmeteoapi.data.local
+package ru.fefu.homework3_weatherappwithopenmeteoapi.data.localDb
 
 import androidx.room.Dao
 import androidx.room.Delete

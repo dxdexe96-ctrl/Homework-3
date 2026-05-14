@@ -5,19 +5,17 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import androidx.compose.runtime.LaunchedEffect
-import androidx.hilt.navigation.compose.hiltViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import ru.fefu.homework3_weatherappwithopenmeteoapi.ui.screen.DetailScreen
 import ru.fefu.homework3_weatherappwithopenmeteoapi.ui.screen.FavouritesScreen
 import ru.fefu.homework3_weatherappwithopenmeteoapi.ui.screen.SearchScreen
-import ru.fefu.homework3_weatherappwithopenmeteoapi.ui.viewmodel.WeatherViewModel
+import ru.fefu.homework3_weatherappwithopenmeteoapi.ui.viewmodel.DetailViewModel
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -34,48 +32,43 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
-    val viewModel: WeatherViewModel = hiltViewModel()
 
-    NavHost(navController = navController, startDestination = "search"){
-        composable("search") {
+    NavHost(navController = navController, startDestination = "search") {
+        composable(Route.Search.path) {
             SearchScreen(
-                searchQuery = viewModel.searchQuery.value,
-                onQueryChange = viewModel::onQueryChange,
-                onSearch = viewModel::searchCities,
-                searchState = viewModel.searchState.value,
                 onCityClick = { city ->
-                    navController.navigate("detail/${city.id}")
+                    navController.navigate(Route.Details.createPath(city.id))
                 },
-                onFavouriteClick = viewModel::toggleFavourite,
                 onOpenFavourites = {
-                    navController.navigate("favourites")
+                    navController.navigate(Route.Favorites.path)
                 }
             )
         }
-        composable("favourites") {
+        composable(Route.Favorites.path) {
             FavouritesScreen(
-                favourites = viewModel.favourites.value,
                 onBack = { navController.popBackStack() },
                 onCityClick = { city ->
-                    navController.navigate("detail/${city.id}")
+                    navController.navigate(Route.Details.createPath(city.id))
                 },
-                onFavouriteClick = viewModel::toggleFavourite
             )
         }
-
-        val detailArguments = listOf(navArgument("cityId") {
-            type = NavType.IntType }
-        )
-
-        composable("detail/{cityId}", arguments = detailArguments) {
-            LaunchedEffect(it.arguments!!.getInt("cityId")) {
-                viewModel.loadWeather(it.arguments!!.getInt("cityId"))
-            }
+        composable(
+            route = Route.Details.path,
+            arguments = listOf(navArgument("cityId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val cityId = backStackEntry.arguments?.getInt("cityId") ?: 0
             DetailScreen(
-                detailState = viewModel.detailState.value,
-                onBack = { navController.popBackStack() },
-                onFavouriteClick = { city -> viewModel.toggleFavourite(city) }
+                vm = hiltViewModel<DetailViewModel, DetailViewModel.Factory> { it.create(cityId) },
+                onBack = { navController.popBackStack() }
             )
         }
+    }
+}
+
+sealed class Route(val path: String) {
+    object Favorites : Route("favourites")
+    object Search : Route("search")
+    object Details : Route("detail/{cityId}") {
+        fun createPath(cityId: Int): String = "detail/$cityId"
     }
 }
