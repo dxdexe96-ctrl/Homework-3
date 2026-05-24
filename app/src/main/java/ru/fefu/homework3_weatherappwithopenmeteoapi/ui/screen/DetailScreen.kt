@@ -59,6 +59,8 @@ fun DetailScreen(
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text("Ошибка: ${state.message}")
                         Spacer(modifier = Modifier.height(8.dp))
+                        Button(onClick = { vm.retryClick() }) { Text("Повторить") }
+                        Spacer(modifier = Modifier.height(8.dp))
                         Button(onClick = onBack) { Text("Назад") }
                     }
                 }

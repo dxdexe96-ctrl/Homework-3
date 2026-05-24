@@ -36,6 +36,12 @@ fun WeatherDetail(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(cityItem.city.name, style = MaterialTheme.typography.headlineMedium)
+        if (!cityItem.city.admin1.isNullOrBlank()) {
+            Text(cityItem.city.admin1, style = MaterialTheme.typography.bodyMedium)
+        }
+        if (!cityItem.city.admin2.isNullOrBlank()) {
+            Text(cityItem.city.admin2, style = MaterialTheme.typography.bodyMedium)
+        }
         if (!cityItem.city.country.isNullOrBlank()) {
             Text(cityItem.city.country, style = MaterialTheme.typography.bodyMedium)
         }

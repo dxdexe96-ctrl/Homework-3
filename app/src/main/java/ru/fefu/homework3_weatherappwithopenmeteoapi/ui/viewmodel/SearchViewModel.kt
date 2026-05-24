@@ -14,8 +14,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -40,21 +40,23 @@ class SearchViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val searchQuery = MutableStateFlow("")
+    private val trigger = MutableStateFlow(Unit)
     val query = searchQuery.asStateFlow()
 
-    val state: StateFlow<SearchUiState> = searchQuery
-        .debounce(500)
-        .filter { it.isNotBlank() }
+    val state: StateFlow<SearchUiState> = combine(
+        searchQuery,
+        trigger.onStart { emit(Unit) }
+    ) { query, _ ->
+        query
+    }
+        .debounce { query -> if (query.isBlank()) 0L else 500L }
         .flatMapLatest { query ->
-            combine(
-                repository.searchCities(query),
-                repository.getFavourites()
-            ) { cities, favourites ->
-                val items = cities.map { city ->
+            repository.getFavourites().map { favourites ->
+                val items = repository.searchCities(query).map { city ->
                     CityItem(city, isFavourite = favourites.any { it.id == city.id })
                 }
-
-                if (items.isEmpty()) SearchUiState.Empty
+                if (query.isBlank()) SearchUiState.Idle
+                else if (items.isEmpty()) SearchUiState.Empty
                 else SearchUiState.Success(items)
             }
                 .onStart { emit(SearchUiState.Loading) }
@@ -65,6 +67,10 @@ class SearchViewModel @Inject constructor(
 
     fun onQueryChanged(newQuery: String) {
         searchQuery.value = newQuery
+    }
+
+    fun retryClick() {
+        trigger.tryEmit(Unit)
     }
 
     fun toggleFavourite(item: CityItem) {

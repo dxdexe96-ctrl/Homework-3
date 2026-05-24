@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -76,7 +77,7 @@ fun SearchScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             when (val state = state) {
-                is SearchUiState.Idle -> Text("Введите название города и нажмите «Найти»")
+                is SearchUiState.Idle -> Text("Введите название города")
                 is SearchUiState.Loading -> Box(
                     modifier = Modifier.fillMaxWidth(),
                     contentAlignment = Alignment.Center
@@ -86,11 +87,12 @@ fun SearchScreen(
                 is SearchUiState.Error -> {
                     Text("Ошибка: ${state.message}")
                     Spacer(modifier = Modifier.height(8.dp))
+                    Button(onClick = {vm.retryClick()}) { Text("Повторить") }
                 }
 
                 is SearchUiState.Success -> {
                     LazyColumn {
-                        items(state.items) { item ->
+                        items(state.items, key = {it.city.id}) { item ->
                             CityListItem(
                                 cityItem = item,
                                 onClick = { onCityClick(item.city) },

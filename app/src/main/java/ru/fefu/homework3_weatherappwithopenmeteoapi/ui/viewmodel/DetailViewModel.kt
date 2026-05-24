@@ -8,10 +8,11 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
@@ -42,22 +43,33 @@ class DetailViewModel @AssistedInject constructor(
         fun create(cityId: Int): DetailViewModel
     }
 
-    val state: StateFlow<DetailUiState> = flow<DetailUiState> {
-        val city = repository.getCityById(cityId) ?: throw Exception("Нет такого города")
-        val weather = repository.getWeather(city.latitude, city.longitude)
-        repository.getFavourites().map { favs ->
-            DetailUiState.Success(
-                weather = weather,
-                cityItem = CityItem(
-                    city = city,
-                    isFavourite = favs.any { it.id == cityId }
+    private val trigger = MutableStateFlow(Unit)
+
+    val state: StateFlow<DetailUiState> = trigger
+        .onStart { emit(Unit) }
+        .flatMapLatest<Unit, DetailUiState> {
+            val city = repository.getCityById(cityId)
+                ?: throw Exception("Нет такого города")
+
+            val weather = repository.getWeather(city.latitude, city.longitude)
+
+            repository.getFavourites().map { favs ->
+                DetailUiState.Success(
+                    weather = weather,
+                    cityItem = CityItem(
+                        city = city,
+                        isFavourite = favs.any { it.id == city.id }
+                    )
                 )
-            )
-        }.collect { emit(it) }
-    }
+            }
+        }
         .onStart { emit(DetailUiState.Loading) }
-        .catch { emit(DetailUiState.Error(it.message ?: " Ошибка")) }
+        .catch { e -> emit(DetailUiState.Error(e.message ?: "Ошибка")) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), DetailUiState.Loading)
+
+    fun retryClick() {
+        trigger.tryEmit(Unit)
+    }
 
     fun toggleFavourite(item: CityItem) {
         viewModelScope.launch {

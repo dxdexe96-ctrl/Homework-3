@@ -33,7 +33,7 @@ fun CityListItem(
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(cityItem.city.name, style = MaterialTheme.typography.bodyLarge)
-            val subtitle = listOfNotNull(cityItem.city.admin1, cityItem.city.country)
+            val subtitle = listOfNotNull(cityItem.city.admin1,cityItem.city.admin2, cityItem.city.country)
                 .filter { it.isNotBlank() }
                 .joinToString(", ")
             if (subtitle.isNotBlank()) {

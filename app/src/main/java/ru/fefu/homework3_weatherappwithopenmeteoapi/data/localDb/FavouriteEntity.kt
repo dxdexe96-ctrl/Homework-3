@@ -8,7 +8,8 @@ data class FavouriteEntity(
     @PrimaryKey val id: Int,
     val name: String,
     val country: String,
-    val region: String,
+    val region1: String,
+    val region2: String,
     val latitude: Double,
     val longitude: Double
 )
