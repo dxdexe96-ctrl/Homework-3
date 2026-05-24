@@ -13,6 +13,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import dagger.hilt.android.AndroidEntryPoint
 import ru.fefu.homework3_weatherappwithopenmeteoapi.ui.screen.DetailScreen
+import ru.fefu.homework3_weatherappwithopenmeteoapi.ui.screen.ErrorScreen
 import ru.fefu.homework3_weatherappwithopenmeteoapi.ui.screen.FavouritesScreen
 import ru.fefu.homework3_weatherappwithopenmeteoapi.ui.screen.SearchScreen
 import ru.fefu.homework3_weatherappwithopenmeteoapi.ui.viewmodel.DetailViewModel
@@ -56,12 +57,17 @@ fun AppNavigation() {
             route = Route.Details.path,
             arguments = listOf(navArgument("cityId") { type = NavType.IntType })
         ) { backStackEntry ->
-            val cityId = backStackEntry.arguments?.getInt("cityId") ?: 0
-            DetailScreen(
-                vm = hiltViewModel<DetailViewModel, DetailViewModel.Factory> { it.create(cityId) },
-                onBack = { navController.popBackStack() }
-            )
+            val cityId = backStackEntry.arguments?.getInt("cityId")
+            if (cityId == null) {
+                ErrorScreen("Неверный ID") { navController.navigate(Route.Search.path) }
+            } else {
+                DetailScreen(
+                    vm = hiltViewModel<DetailViewModel, DetailViewModel.Factory> { it.create(cityId) },
+                    onBack = { navController.popBackStack() }
+                )
+            }
         }
+
     }
 }
 
