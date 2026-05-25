@@ -7,6 +7,8 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -14,7 +16,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
@@ -40,26 +45,37 @@ class SearchViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val searchQuery = MutableStateFlow("")
-    private val trigger = MutableStateFlow(Unit)
+    private val trigger = MutableSharedFlow<Unit>(
+        replay = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
     val query = searchQuery.asStateFlow()
 
     val state: StateFlow<SearchUiState> = combine(
         searchQuery,
         trigger.onStart { emit(Unit) }
-    ) { query, _ ->
-        query
-    }
+    ) { query, _ -> query }
         .debounce { query -> if (query.isBlank()) 0L else 500L }
         .flatMapLatest { query ->
-            repository.getFavourites().map { favourites ->
-                val items = repository.searchCities(query).map { city ->
-                    CityItem(city, isFavourite = favourites.any { it.id == city.id })
+            if (query.isBlank()) return@flatMapLatest flowOf(SearchUiState.Idle)
+            flow {
+                // .getFavourites().map { .searchCities(query) }
+                //тут тоже была ошибка на каждое обновления fav будет заново поиск
+                // и проверка на пустую строку была после запроса
+                val searchResult = repository.searchCities(query)
+
+                if (searchResult.isEmpty()) emit(SearchUiState.Empty)
+                else {
+                    emitAll(
+                        repository.getFavourites().map { favourites ->
+                            val items = searchResult.map { city ->
+                                CityItem(city, isFavourite = favourites.any { it.id == city.id })
+                            }
+                            SearchUiState.Success(items)
+                        }
+                    )
                 }
-                if (query.isBlank()) SearchUiState.Idle
-                else if (items.isEmpty()) SearchUiState.Empty
-                else SearchUiState.Success(items)
-            }
-                .onStart { emit(SearchUiState.Loading) }
+            }.onStart { emit(SearchUiState.Loading) }
                 .catch { e -> emit(SearchUiState.Error(e.message ?: "Ошибка")) }
         }
         .onStart { emit(SearchUiState.Idle) }

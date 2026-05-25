@@ -8,6 +8,8 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -42,14 +44,20 @@ class DetailViewModel @AssistedInject constructor(
     interface Factory {
         fun create(cityId: Int): DetailViewModel
     }
+    // Замена State на Shared тк ретрай все же скорее событие
+    // И при ошибки на 1 ретрай, вызвать 2 не получиться из-за уникальности State
+    private val trigger = MutableSharedFlow<Unit>(
+        replay = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
 
-    private val trigger = MutableStateFlow(Unit)
+    init {
+        trigger.tryEmit(Unit)
+    }
 
     val state: StateFlow<DetailUiState> = trigger
-        .onStart { emit(Unit) }
         .flatMapLatest<Unit, DetailUiState> {
-            val city = repository.getCityById(cityId)
-                ?: throw Exception("Нет такого города")
+            val city = repository.getCityById(cityId) ?: error("Нет такого города")
 
             val weather = repository.getWeather(city.latitude, city.longitude)
 
