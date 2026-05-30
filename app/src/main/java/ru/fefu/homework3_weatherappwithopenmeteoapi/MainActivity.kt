@@ -5,7 +5,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -15,8 +14,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import ru.fefu.homework3_weatherappwithopenmeteoapi.ui.routes.DetailRoute
 import ru.fefu.homework3_weatherappwithopenmeteoapi.ui.routes.FavouritesRoute
 import ru.fefu.homework3_weatherappwithopenmeteoapi.ui.routes.SearchRoute
-import ru.fefu.homework3_weatherappwithopenmeteoapi.ui.screen.ErrorScreen
-import ru.fefu.homework3_weatherappwithopenmeteoapi.ui.viewmodel.DetailViewModel
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -56,20 +53,10 @@ fun AppNavigation() {
         composable(
             route = Route.Details.path,
             arguments = listOf(navArgument("cityId") { type = NavType.IntType })
-        ) { backStackEntry ->
-            val cityId = backStackEntry.arguments?.getInt("cityId")
-            if (cityId == null) {
-                ErrorScreen("Неверный ID") {
-                    if (!navController.popBackStack()) {
-                        navController.navigate(Route.Search.path)
-                    }
-                }
-            } else {
-                DetailRoute(
-                    vm = hiltViewModel<DetailViewModel, DetailViewModel.Factory> { it.create(cityId) },
-                    onBack = { navController.popBackStack() }
-                )
-            }
+        ) {
+            DetailRoute(
+                onBack = { navController.popBackStack() }
+            )
         }
     }
 }
