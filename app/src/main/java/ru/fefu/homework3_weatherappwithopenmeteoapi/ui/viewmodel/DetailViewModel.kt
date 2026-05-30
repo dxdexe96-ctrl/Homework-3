@@ -13,7 +13,9 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -55,15 +57,20 @@ class DetailViewModel @AssistedInject constructor(
 
     val state: StateFlow<DetailUiState> = trigger
         .flatMapLatest {
-            val city = repository.getCityById(cityId) ?: error("Нет такого города")
+            flow {
+                emit(DetailUiState.Loading)
 
-            val weather = repository.getWeather(city.latitude, city.longitude)
+                val city = repository.getCityById(cityId) ?: error("Нет такого города")
+                val weather = repository.getWeather(city.latitude, city.longitude)
 
-            repository.existFavById(cityId).map<Boolean, DetailUiState> { isFavourite ->
-                DetailUiState.Success(
-                    weather = weather,
-                    cityItem = CityItem(city, isFavourite)
-                )
+                val favouritesFlow = repository.existFavById(cityId).map { isFavourite ->
+                    DetailUiState.Success(
+                        weather = weather,
+                        cityItem = CityItem(city, isFavourite)
+                    )
+                }
+                emitAll(favouritesFlow)
+
             }.catch { e -> emit(DetailUiState.Error(e.message ?: "Ошибка")) }
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), DetailUiState.Loading)
