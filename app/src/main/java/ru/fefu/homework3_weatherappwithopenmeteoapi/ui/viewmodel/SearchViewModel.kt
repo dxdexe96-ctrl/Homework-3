@@ -8,6 +8,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -16,19 +17,24 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import ru.fefu.homework3_weatherappwithopenmeteoapi.domain.entity.City
+import ru.fefu.homework3_weatherappwithopenmeteoapi.domain.entity.CityItem
 import ru.fefu.homework3_weatherappwithopenmeteoapi.domain.repository.WeatherRepository
 import javax.inject.Inject
 
-data class CityItem(val city: City, val isFavourite: Boolean)
+private sealed interface SearchResult {
+    data object Idle : SearchResult
+    data object Loading : SearchResult
+    data object Empty : SearchResult
+    data class Success(val cities: List<City>) : SearchResult
+    data class Error(val message: String) : SearchResult
+}
 
 sealed class SearchUiState {
     object Idle : SearchUiState()
@@ -43,7 +49,6 @@ sealed class SearchUiState {
 class SearchViewModel @Inject constructor(
     private val repository: WeatherRepository
 ) : ViewModel() {
-
     private val searchQuery = MutableStateFlow("")
     private val trigger = MutableSharedFlow<Unit>(
         replay = 1,
@@ -51,35 +56,52 @@ class SearchViewModel @Inject constructor(
     )
     val query = searchQuery.asStateFlow()
 
-    val state: StateFlow<SearchUiState> = combine(
+    private val searchResults: Flow<SearchResult> = combine(
         searchQuery,
         trigger.onStart { emit(Unit) }
     ) { query, _ -> query }
         .debounce { query -> if (query.isBlank()) 0L else 500L }
         .flatMapLatest { query ->
-            if (query.isBlank()) return@flatMapLatest flowOf(SearchUiState.Idle)
-            flow {
-                // .getFavourites().map { .searchCities(query) }
-                //тут тоже была ошибка на каждое обновления fav будет заново поиск
-                // и проверка на пустую строку была после запроса
-                val searchResult = repository.searchCities(query)
+            if (query.isBlank()) flowOf(SearchResult.Idle)
+            else {
+                flow {
+                    emit(SearchResult.Loading)
+                    val cities = repository.searchCities(query)
 
-                if (searchResult.isEmpty()) emit(SearchUiState.Empty)
-                else {
-                    emitAll(
-                        repository.getFavourites().map { favourites ->
-                            val items = searchResult.map { city ->
-                                CityItem(city, isFavourite = favourites.any { it.id == city.id })
-                            }
-                            SearchUiState.Success(items)
-                        }
+                    if (cities.isEmpty()) {
+                        emit(SearchResult.Empty)
+                    } else {
+                        repository.saveCities(cities)
+                        emit(SearchResult.Success(cities))
+                    }
+                }.catch { e -> emit(SearchResult.Error(e.message ?: "Ошибка")) }
+            }
+        }
+
+    val state: StateFlow<SearchUiState> = combine(
+        searchResults,
+        repository.getFavourites()
+    ) { result, favourites ->
+        when (result) {
+            is SearchResult.Idle -> SearchUiState.Idle
+            is SearchResult.Loading -> SearchUiState.Loading
+            is SearchResult.Empty -> SearchUiState.Empty
+            is SearchResult.Error -> SearchUiState.Error(result.message)
+            is SearchResult.Success -> {
+                val items = result.cities.map { city ->
+                    CityItem(
+                        city = city,
+                        isFavourite = favourites.any { it.id == city.id }
                     )
                 }
-            }.onStart { emit(SearchUiState.Loading) }
-                .catch { e -> emit(SearchUiState.Error(e.message ?: "Ошибка")) }
+                SearchUiState.Success(items)
+            }
         }
-        .onStart { emit(SearchUiState.Idle) }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SearchUiState.Idle)
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = SearchUiState.Idle
+    )
 
     fun onQueryChanged(newQuery: String) {
         searchQuery.value = newQuery

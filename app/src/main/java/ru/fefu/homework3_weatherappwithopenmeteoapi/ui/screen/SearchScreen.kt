@@ -22,28 +22,24 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import ru.fefu.homework3_weatherappwithopenmeteoapi.domain.entity.City
+import ru.fefu.homework3_weatherappwithopenmeteoapi.domain.entity.CityItem
 import ru.fefu.homework3_weatherappwithopenmeteoapi.ui.components.CityListItem
 import ru.fefu.homework3_weatherappwithopenmeteoapi.ui.viewmodel.SearchUiState
-import ru.fefu.homework3_weatherappwithopenmeteoapi.ui.viewmodel.SearchViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchScreen(
-    vm: SearchViewModel = hiltViewModel(),
+    state: SearchUiState,
+    query: String,
     onOpenFavourites: () -> Unit,
-    onCityClick: (City) -> Unit
+    onCityClick: (CityItem) -> Unit,
+    onQueryChanged: (String) -> Unit,
+    onRetryClick: () -> Unit,
+    onToggleFavourite: (CityItem) -> Unit
 ) {
-
-    val state by vm.state.collectAsStateWithLifecycle()
-    val query by vm.query.collectAsStateWithLifecycle()
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -67,7 +63,7 @@ fun SearchScreen(
         ) {
             OutlinedTextField(
                 value = query,
-                onValueChange = vm::onQueryChanged,
+                onValueChange = onQueryChanged,
                 label = { Text("Название города") },
                 placeholder = { Text("Например: Moscow") },
                 modifier = Modifier.fillMaxWidth(),
@@ -87,16 +83,16 @@ fun SearchScreen(
                 is SearchUiState.Error -> {
                     Text("Ошибка: ${state.message}")
                     Spacer(modifier = Modifier.height(8.dp))
-                    Button(onClick = {vm.retryClick()}) { Text("Повторить") }
+                    Button(onClick = onRetryClick) { Text("Повторить") }
                 }
 
                 is SearchUiState.Success -> {
                     LazyColumn {
-                        items(state.items, key = {it.city.id}) { item ->
+                        items(state.items, key = { it.city.id }) { item ->
                             CityListItem(
                                 cityItem = item,
-                                onClick = { onCityClick(item.city) },
-                                onFavouriteClick = vm::toggleFavourite
+                                onClick = { onCityClick(item) },
+                                onFavouriteClick = onToggleFavourite
                             )
                             HorizontalDivider()
                         }

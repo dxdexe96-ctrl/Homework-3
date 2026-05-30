@@ -17,23 +17,21 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import ru.fefu.homework3_weatherappwithopenmeteoapi.domain.entity.CityItem
 import ru.fefu.homework3_weatherappwithopenmeteoapi.ui.components.WeatherDetail
 import ru.fefu.homework3_weatherappwithopenmeteoapi.ui.viewmodel.DetailUiState
-import ru.fefu.homework3_weatherappwithopenmeteoapi.ui.viewmodel.DetailViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetailScreen(
-    vm: DetailViewModel = hiltViewModel(),
+    state: DetailUiState,
     onBack: () -> Unit,
+    onRetry: () -> Unit,
+    onToggleFavourite: (CityItem) -> Unit,
 ) {
-    val state by vm.state.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
@@ -59,7 +57,7 @@ fun DetailScreen(
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text("Ошибка: ${state.message}")
                         Spacer(modifier = Modifier.height(8.dp))
-                        Button(onClick = { vm.retryClick() }) { Text("Повторить") }
+                        Button(onClick = onRetry) { Text("Повторить") }
                         Spacer(modifier = Modifier.height(8.dp))
                         Button(onClick = onBack) { Text("Назад") }
                     }
@@ -69,7 +67,7 @@ fun DetailScreen(
                     WeatherDetail(
                         cityItem = state.cityItem,
                         weather = state.weather,
-                        onFavouriteClick = vm::toggleFavourite
+                        onFavouriteClick = onToggleFavourite
                     )
                 }
             }

@@ -10,6 +10,7 @@ import dagger.hilt.components.SingletonComponent
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import ru.fefu.homework3_weatherappwithopenmeteoapi.data.localDb.AppDatabase
+import ru.fefu.homework3_weatherappwithopenmeteoapi.data.localDb.CitiesDao
 import ru.fefu.homework3_weatherappwithopenmeteoapi.data.localDb.FavouriteDao
 import ru.fefu.homework3_weatherappwithopenmeteoapi.data.remote.GeocodingApi
 import ru.fefu.homework3_weatherappwithopenmeteoapi.data.remote.WeatherApi
@@ -32,6 +33,10 @@ object AppModule {
 
     @Provides
     @Singleton
+    fun provideCitiesDao(db: AppDatabase): CitiesDao = db.citiesDao()
+
+    @Provides
+    @Singleton
     fun provideGeocodingApi(): GeocodingApi = Retrofit.Builder()
         .baseUrl("https://geocoding-api.open-meteo.com/")
         .addConverterFactory(GsonConverterFactory.create())
@@ -51,6 +56,7 @@ object AppModule {
     fun provideWeatherRepository(
         geocodingApi: GeocodingApi,
         weatherApi: WeatherApi,
+        citiesDao: CitiesDao,
         favouriteDao: FavouriteDao
-    ): WeatherRepository = WeatherRepositoryImpl(geocodingApi, weatherApi, favouriteDao)
+    ): WeatherRepository = WeatherRepositoryImpl(geocodingApi, weatherApi, citiesDao, favouriteDao)
 }

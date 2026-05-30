@@ -7,5 +7,5 @@ data class City(
     val admin1: String? = "",
     val admin2: String? = "",
     val latitude: Double,
-    val longitude: Double
+    val longitude: Double,
 )

@@ -19,9 +19,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import ru.fefu.homework3_weatherappwithopenmeteoapi.data.dto.weatherDescription
+import ru.fefu.homework3_weatherappwithopenmeteoapi.domain.entity.CityItem
 import ru.fefu.homework3_weatherappwithopenmeteoapi.domain.entity.CurrentWeather
-import ru.fefu.homework3_weatherappwithopenmeteoapi.ui.viewmodel.CityItem
 
 @Composable
 fun WeatherDetail(
@@ -72,4 +71,16 @@ fun WeatherDetail(
             Text(if (cityItem.isFavourite) "Убрать из избранного" else "В избранное")
         }
     }
+}
+
+fun weatherDescription(code: Int): String = when (code) {
+    0 -> "Ясно"
+    in 1..3 -> "Переменная облачность"
+    in 45..48 -> "Туман"
+    in 51..55 -> "Морось"
+    in 61..67 -> "Дождь"
+    in 71..77 -> "Снег"
+    in 80..82 -> "Ливень"
+    in 95..99 -> "Гроза"
+    else -> "Неизвестно"
 }

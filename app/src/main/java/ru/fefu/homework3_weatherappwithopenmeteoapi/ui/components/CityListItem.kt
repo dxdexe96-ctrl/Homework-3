@@ -16,7 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import ru.fefu.homework3_weatherappwithopenmeteoapi.ui.viewmodel.CityItem
+import ru.fefu.homework3_weatherappwithopenmeteoapi.domain.entity.CityItem
 
 @Composable
 fun CityListItem(

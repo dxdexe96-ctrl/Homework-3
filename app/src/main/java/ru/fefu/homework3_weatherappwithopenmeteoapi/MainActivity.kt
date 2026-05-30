@@ -12,10 +12,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import dagger.hilt.android.AndroidEntryPoint
-import ru.fefu.homework3_weatherappwithopenmeteoapi.ui.screen.DetailScreen
+import ru.fefu.homework3_weatherappwithopenmeteoapi.ui.routes.DetailRoute
+import ru.fefu.homework3_weatherappwithopenmeteoapi.ui.routes.FavouritesRoute
+import ru.fefu.homework3_weatherappwithopenmeteoapi.ui.routes.SearchRoute
 import ru.fefu.homework3_weatherappwithopenmeteoapi.ui.screen.ErrorScreen
-import ru.fefu.homework3_weatherappwithopenmeteoapi.ui.screen.FavouritesScreen
-import ru.fefu.homework3_weatherappwithopenmeteoapi.ui.screen.SearchScreen
 import ru.fefu.homework3_weatherappwithopenmeteoapi.ui.viewmodel.DetailViewModel
 
 @AndroidEntryPoint
@@ -36,9 +36,9 @@ fun AppNavigation() {
 
     NavHost(navController = navController, startDestination = "search") {
         composable(Route.Search.path) {
-            SearchScreen(
-                onCityClick = { city ->
-                    navController.navigate(Route.Details.createPath(city.id))
+            SearchRoute(
+                onCityClick = { cityItem ->
+                    navController.navigate(Route.Details.createPath(cityItem.city.id))
                 },
                 onOpenFavourites = {
                     navController.navigate(Route.Favorites.path)
@@ -46,10 +46,10 @@ fun AppNavigation() {
             )
         }
         composable(Route.Favorites.path) {
-            FavouritesScreen(
+            FavouritesRoute(
                 onBack = { navController.popBackStack() },
-                onCityClick = { city ->
-                    navController.navigate(Route.Details.createPath(city.id))
+                onCityClick = { cityItem ->
+                    navController.navigate(Route.Details.createPath(cityItem.city.id))
                 },
             )
         }
@@ -59,15 +59,18 @@ fun AppNavigation() {
         ) { backStackEntry ->
             val cityId = backStackEntry.arguments?.getInt("cityId")
             if (cityId == null) {
-                ErrorScreen("Неверный ID") { navController.navigate(Route.Search.path) }
+                ErrorScreen("Неверный ID") {
+                    if (!navController.popBackStack()) {
+                        navController.navigate(Route.Search.path)
+                    }
+                }
             } else {
-                DetailScreen(
+                DetailRoute(
                     vm = hiltViewModel<DetailViewModel, DetailViewModel.Factory> { it.create(cityId) },
                     onBack = { navController.popBackStack() }
                 )
             }
         }
-
     }
 }
 

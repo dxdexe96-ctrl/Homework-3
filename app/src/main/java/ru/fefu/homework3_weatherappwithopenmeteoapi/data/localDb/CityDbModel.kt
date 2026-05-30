@@ -3,13 +3,14 @@ package ru.fefu.homework3_weatherappwithopenmeteoapi.data.localDb
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "favourites")
-data class FavouriteEntity(
+@Entity(tableName = "cities")
+data class CityDbModel(
     @PrimaryKey val id: Int,
     val name: String,
     val country: String,
     val region1: String,
     val region2: String,
     val latitude: Double,
-    val longitude: Double
+    val longitude: Double,
+    val lastAccessed: Long = System.currentTimeMillis()
 )

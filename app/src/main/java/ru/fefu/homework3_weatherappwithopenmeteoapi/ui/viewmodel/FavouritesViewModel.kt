@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import ru.fefu.homework3_weatherappwithopenmeteoapi.domain.entity.CityItem
 import ru.fefu.homework3_weatherappwithopenmeteoapi.domain.repository.WeatherRepository
 import javax.inject.Inject
 
@@ -34,4 +35,5 @@ class FavouritesViewModel @Inject constructor(
             repository.removeFavourite(cityItem.city)
         }
     }
+
 }

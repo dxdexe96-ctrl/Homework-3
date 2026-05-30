@@ -10,15 +10,14 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import ru.fefu.homework3_weatherappwithopenmeteoapi.domain.entity.CityItem
 import ru.fefu.homework3_weatherappwithopenmeteoapi.domain.entity.CurrentWeather
 import ru.fefu.homework3_weatherappwithopenmeteoapi.domain.repository.WeatherRepository
 
@@ -44,8 +43,7 @@ class DetailViewModel @AssistedInject constructor(
     interface Factory {
         fun create(cityId: Int): DetailViewModel
     }
-    // Замена State на Shared тк ретрай все же скорее событие
-    // И при ошибки на 1 ретрай, вызвать 2 не получиться из-за уникальности State
+
     private val trigger = MutableSharedFlow<Unit>(
         replay = 1,
         onBufferOverflow = BufferOverflow.DROP_OLDEST
@@ -56,23 +54,18 @@ class DetailViewModel @AssistedInject constructor(
     }
 
     val state: StateFlow<DetailUiState> = trigger
-        .flatMapLatest<Unit, DetailUiState> {
+        .flatMapLatest {
             val city = repository.getCityById(cityId) ?: error("Нет такого города")
 
             val weather = repository.getWeather(city.latitude, city.longitude)
 
-            repository.getFavourites().map { favs ->
+            repository.existFavById(cityId).map<Boolean, DetailUiState> { isFavourite ->
                 DetailUiState.Success(
                     weather = weather,
-                    cityItem = CityItem(
-                        city = city,
-                        isFavourite = favs.any { it.id == city.id }
-                    )
+                    cityItem = CityItem(city, isFavourite)
                 )
-            }
+            }.catch { e -> emit(DetailUiState.Error(e.message ?: "Ошибка")) }
         }
-        .onStart { emit(DetailUiState.Loading) }
-        .catch { e -> emit(DetailUiState.Error(e.message ?: "Ошибка")) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), DetailUiState.Loading)
 
     fun retryClick() {
