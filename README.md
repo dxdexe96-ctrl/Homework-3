@@ -1,22 +1,10 @@
-Стародубов Павел Павлович - Б9123.09.03.03(ЦТЭ)
+ФИО: Стародубов Павел Павлович, Группа: Б9123:09.03.03 (ЦТЭ)
 
-API:
-GET("v1/forecast?latitude={}&longitude={}&current_weather={}) - получение самой погоды города
-GET("v1/search?name={}&count={}&language) - получение данных города
+Соответствие требованиям по Flow
 
-что храните в Room (таблица + сценарий)
-![rr](./images/roomDB.png)
-![rr](./images/roomApi.png)
+    Композиция 3-х независимых источников: Состояние экрана : searchQuery (ввод), кнопка обновления и repository.getFavourites(), repo.existFavById() (БД Room).
 
-как проверить (короткий сценарий “сделал - перезапустил - осталось”)
-сценарий работает
-![rr](./images/1.png)
-![rr](./images/2.png)
-![rr](./images/3.png)
-![rr](./images/4.png)
+    Нетривиальное поведение: Использование .debounce(500) и .flatMapLatest для автоматической отмены устаревших сетевых запросов при быстром вводе,
+    combine для слияния flow и использование горячего потока (SharedFlow) для retry.
 
-4–6 скриншотов (Loading/Error/List/Detail + состояние Room)
-![rr](./images/5.png)
-![rr](./images/6.png)
-![rr](./images/7.png)
-![rr](./images/8.png)
+    Реактивность БД: UI автоматически обновляется при любых изменениях в Room без ручного вызова refresh-методов.
