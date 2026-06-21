@@ -44,7 +44,7 @@ class WeatherRepositoryImpl @Inject constructor(
     override fun getFavourites(): Flow<List<City>> =
         favouriteDao.getAll().map { list -> list.map { it.toCity() } }
 
-    override suspend fun existFavById(id: Int): Flow<Boolean> =
+    override fun existFavById(id: Int): Flow<Boolean> =
         favouriteDao.existById(id)
 
     override suspend fun getCityById(id: Int): City? =
